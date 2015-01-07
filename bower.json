@@ -1,0 +1,32 @@
+{
+    "name": "requirejs-plugin-bower",
+    "version": "0.0.1",
+    "authors": [
+        "rodneyebanks <foss@rodneyebanks.com>"
+    ],
+    "homepage": "https://github.com/RodneyEbanks/requirejs-plugin-bower",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/RodneyEbanks/requirejs-plugin-bower"
+    },
+    "main": ["dist/bower.js", "dist/bower-bundle.js"],
+    "license": [{
+        "type": "MIT",
+        "url": "http://www.opensource.org/licenses/MIT"
+    }, {
+        "type": "BSD",
+        "url": "http://www.opensource.org/licenses/BSD-3-Clause"
+    }],
+    "private": false,
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ],
+    "dependencies": {
+        "requirejs-text": "~2.0.13",
+        "requirejs-plugins": "~1.0.3"
+    }
+}

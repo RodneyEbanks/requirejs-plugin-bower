@@ -1,0 +1,10 @@
+
+bower.js
+----------------
+bower.js
+
+bower-bundle.js
+----------------
+/home/rodney/Dropbox/Projects/Applications/requirejs-plugin-bower/bower_components/requirejs-text/text.js
+/home/rodney/Dropbox/Projects/Applications/requirejs-plugin-bower/bower_components/requirejs-plugins/src/json.js
+bower.js
