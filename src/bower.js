@@ -172,7 +172,7 @@
                 request.parent = req;
                 request.config = config;
                 bower.settings = defaults;
-                bower.settings = objectExtend(bower.settings, request.config.bower);
+                bower.settings = objectExtend(bower.settings, request.config.bower || {});
                 bower.settings = objectExtend(bower.settings, bower.overrides);
                 bower.settings.file = name;
 
