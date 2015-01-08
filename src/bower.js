@@ -14,34 +14,51 @@
         var defaults = {
             file: '/bower.json',
             baseUrl: '../bower_components',
-            extensions: 'js,css',
-            ignore: 'requirejs,requirejs-domready,requirejs-text',
+            extensions: 'js|css',
+            ignore: 'requirejs|requirejs-domready|requirejs-text',
             auto: true
         }, request = {
-                name: '',
                 parent: null,
                 config: {}
             }, bower = {
+                settings: {},
+                overrides: {},
                 config: {
                     paths: {},
                     shim: {}
                 },
-                json: {},
                 processed: {}
             }, buildMap = {}, REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
-            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/,
-            REGEX_VALID_EXTENSION = /^(js|css)$/;
+            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/, REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/;
 
-        function forEachObjectKey(value, fn) {
+        function objectKeyForEach(value, fn) {
             Object.keys(value).forEach(fn);
+        }
+
+        function objectExtend(destination, source) {
+            if (typeof source === 'object') {
+                objectKeyForEach(source, function(value) {
+                    destination[value] = source[value];
+                });
+            }
+            return destination;
         }
 
         function objectKeysToArray(obj) {
             var arr = [];
-            forEachObjectKey(obj, function(key) {
+            objectKeyForEach(obj, function(key) {
                 arr.push(key);
             });
             return arr;
+        }
+
+        // http://jsperf.com/check-json-validity-try-catch-vs-regex
+        function isValidJson(str) {
+            if (str === '') {
+                return false;
+            }
+            str = str.replace(/\\./g, '@').replace(/"[^"\\\n\r]*"/g, '');
+            return (/^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]*$/).test(str);
         }
 
         // http://h3manth.com/content/async-foreach-javascript Author: https://github.com/hemanth
@@ -76,15 +93,15 @@
         }
 
         function formatBowerFilePath(name) {
-            name = defaults.baseUrl + '/' + name + '/bower.json';
+            name = bower.settings.baseUrl + '/' + name + '/bower.json';
             return name;
         }
 
         function parseBowerFile(name, jsonFile, callback, root) {
             var base, dependencies, modulePath = new RegExp(REGEX_PATH_SPLIT),
                 relativePath = new RegExp(REGEX_PATH_RELATIVE),
-                validExt = new RegExp(REGEX_VALID_EXTENSION),
-                ignoreFile = new RegExp('^(' + defaults.ignore + ')$');
+                validExt = new RegExp('^(' + bower.settings.extensions + ')$'),
+                ignoreFile = new RegExp('^(' + bower.settings.ignore + ')$');
 
             function addToConfig(item, name) {
                 var config = {
@@ -105,7 +122,7 @@
                         bower.config.shim[name].deps = config.shim[name].deps = dependencies;
                     }
 
-                    if (!request.config.isBuild && (defaults.auto) !== false) {
+                    if (!request.config.isBuild && (bower.settings.auto !== false)) {
                         requirejs.config(config);
                     }
 
@@ -121,10 +138,9 @@
                 }
                 return value;
             }, function() {
-
+                // Notify callback not used;
             }, function() {
                 if (!bower.processed[name]) {
-
                     if (Array.isArray(jsonFile.main)) {
                         jsonFile.main.forEach(function(value) {
                             addToConfig(modulePath.exec(value));
@@ -142,6 +158,7 @@
         }
 
         function processBowerFile(name, req, callback, config, root) {
+
             if (!bower.processed[name]) {
                 json.load(name, req, function(jsonFile) {
                     parseBowerFile(name, jsonFile, callback, root);
@@ -152,36 +169,36 @@
 
         return {
             load: function pluginLoad(name, req, onLoad, config) {
-                request.name = name;
                 request.parent = req;
                 request.config = config;
-                request.config.bower = request.config.bower || {};
-                defaults.auto = request.config.bower.auto || defaults.auto;
-    
+                bower.settings = defaults;
+                bower.settings = objectExtend(bower.settings, request.config.bower);
+                bower.settings = objectExtend(bower.settings, bower.overrides);
+                bower.settings.file = name;
+
                 if (config.isBuild) {
                     onload();
                 }
 
-                processBowerFile(defaults.file, req, function(config) {
+                processBowerFile(bower.settings.file, req, function(config) {
                     buildMap[name] = config;
                     onLoad(config);
                 }, config, true);
             },
-            normalize: function(name, normalize) {
-                var parts = name.split('|');
+            normalize: function pluginNormalize(name, normalize) {
+                var inputPath = new RegExp(REGEX_PATH_BOWER);
+                name = inputPath.exec(name || bower.settings.file || defaults.file);
+                if (isValidJson(name[2])) {
+                    bower.overrides = JSON.parse(name[2]);
+                }
 
-                defaults.file = parts[0] || defaults.file;
-                defaults.baseUrl = parts[1] || defaults.baseUrl;
-                defaults.ignore = parts[2] || defaults.ignore;
-                defaults.ignore = defaults.ignore.replace(/\,/, '|');
-
-                name = normalize(parts[0]);
+                name = normalize(name[1]);
                 return name;
             },
-            write: function(pluginName, moduleName, write) {
+            write: function pluginWrite(pluginName, moduleName, write) {
                 var content;
                 if (moduleName in buildMap) {
-                    if (request.config.bower.auto) {
+                    if (request.settings.bower.auto) {
                         content = 'requirejs.config(' + buildMap[moduleName] + '); return ' + buildMap[moduleName] + ';';
                     } else {
                         content = buildMap[moduleName];
