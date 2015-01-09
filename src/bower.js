@@ -29,7 +29,8 @@
                 },
                 processed: {}
             }, buildMap = {}, REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
-            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/, REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/;
+            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/,
+            REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/;
 
         function objectKeyForEach(value, fn) {
             Object.keys(value).forEach(fn);
@@ -97,6 +98,16 @@
             return name;
         }
 
+        function processBowerFile(name, req, callback, config, root) {
+
+            if (!bower.processed[name]) {
+                json.load(name, req, function(jsonFile) {
+                    parseBowerFile(name, jsonFile, callback, root);
+                }, config);
+            }
+            return name;
+        }
+
         function parseBowerFile(name, jsonFile, callback, root) {
             var base, dependencies, modulePath = new RegExp(REGEX_PATH_SPLIT),
                 relativePath = new RegExp(REGEX_PATH_RELATIVE),
@@ -157,16 +168,6 @@
             });
         }
 
-        function processBowerFile(name, req, callback, config, root) {
-
-            if (!bower.processed[name]) {
-                json.load(name, req, function(jsonFile) {
-                    parseBowerFile(name, jsonFile, callback, root);
-                }, config);
-            }
-            return name;
-        }
-
         return {
             load: function pluginLoad(name, req, onLoad, config) {
                 request.parent = req;
@@ -177,7 +178,7 @@
                 bower.settings.file = name;
 
                 if (config.isBuild) {
-                    onload();
+                    onLoad();
                 }
 
                 processBowerFile(bower.settings.file, req, function(config) {

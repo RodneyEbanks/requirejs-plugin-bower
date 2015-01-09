@@ -1,9 +1,7 @@
-# RequireJS Plugin for Parsing Dependencies in bower.json (InBrowser & InBuild)
+# RequireJS Plugin for reading paths configuration from bower.json.
 
-A plugin for [RequireJS](http://requirejs.org). May
+A plugin for [RequireJS](http://requirejs.org) for configuring module Paths automatically from bower.json (InBrowser & InBuild). May
 also work on other AMD loaders (never tested it).
-
-For more plugins check [RequireJS Wiki](https://github.com/jrburke/requirejs/wiki/Plugins).
 
 ## Install
 
@@ -13,11 +11,9 @@ You can use [bower](http://bower.io/) to install it easily:
 bower install --save requirejs-plugin-bower
 ```
 
-
-
 ## Plugins
 
- - **bower** : Useful for creating requirejs.config({path:{},shim:{}}) settings automatically.
+ - **bower** : For creating requirejs.config({path:{},shim:{}}) settings automatically.
 
 
 ## Documentation
@@ -31,11 +27,15 @@ comments or on the example code itself.
 Put the plugins inside the `baseUrl` folder (usually same folder as the main.js
 file) or create an alias to the plugin location:
 
-```js
+main.js
+```main.js
 require.config({
     bower: {
-       auto: true // default setting
-    },
+            baseUrl: '../bower_components',
+            extensions: 'js|css',
+            ignore: 'requirejs|requirejs-domready|requirejs-text',
+            auto: true
+        },
     paths : {
         //create alias to plugins (not needed if plugins are on the baseUrl)
         bower: '../bower_components/requirejs-plugin-bower'
@@ -43,15 +43,31 @@ require.config({
 });
 
 // use plugin 
-define([
-        'bower!/bower.json'
-    ], function(config){
-       // optional unless auto loading is disabled auto: false
-       requirejs.config(config);
-    }
-);
-```
+define(['bower!../bower.json'], function(bowerConfig) {
 
+    //  requirejs.config(bowerConfig); // optional if bower: {auto: true}
+    requirejs(['bootstrap']);
+
+});
+```
+bootstrap.js
+```bootstrap.js
+// use other modules using name without location path
+define(['image'], function(image) {
+
+    requirejs(['image!img/bower2requirejs.png'], function(requirejs2bower) {
+
+        var wrapper = document.getElementById('wrapper');
+
+        if (requirejs2bower) {
+            wrapper.innerHTML = '<h2>Success</h2><br>';
+            wrapper.appendChild(requirejs2bower);
+        }
+
+    });
+
+});
+```
 
 ## Removing plugin code after build
 
@@ -67,6 +83,8 @@ plugin code:
     stubModules : ['json', 'text']
 })
 ```
+
+For more plugins check [RequireJS Wiki](https://github.com/jrburke/requirejs/wiki/Plugins).
 
 ## Writing your own plugins
 
