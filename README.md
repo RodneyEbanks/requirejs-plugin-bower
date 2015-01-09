@@ -29,7 +29,7 @@ file) or create an alias to the plugin location:
 
 main.js
 ```main.js
-require.config({
+requirejs.config({
     bower: {
             baseUrl: '../bower_components',
             extensions: 'js|css',
