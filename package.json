@@ -1,0 +1,35 @@
+{
+    "name": "requirejs-plugin-bower",
+    "version": "0.0.2",
+    "description": "Bower components to Requirejs paths (InBrowser & InBuild)",
+    "main": "dist/bower.js",
+    "directories": {
+        "example": "examples"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RodneyEbanks/requirejs-plugin-bower.git"
+    },
+    "keywords": [
+        "requirejs",
+        "require",
+        "bower",
+        "components",
+        "config"
+    ],
+    "author": "rodneyebanks <foss@rodneyebanks.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/RodneyEbanks/requirejs-plugin-bower/issues"
+    },
+    "homepage": "https://github.com/RodneyEbanks/requirejs-plugin-bower",
+    "dependencies": {
+        "requirejs": "^2.1.15"
+    },
+    "devDependencies": {
+        "requirejs": "^2.1.15"
+    }
+}

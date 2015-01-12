@@ -1,7 +1,10 @@
-# RequireJS Plugin for reading paths configuration from bower.json.
+# What if RequireJS could read bower.json files for module paths and dependencies?.
 
-A plugin for [RequireJS](http://requirejs.org) for configuring module Paths automatically from bower.json (InBrowser & InBuild). May
-also work on other AMD loaders (never tested it).
+This Bower plugin for [RequireJS](http://requirejs.org) reads your root bower.json parsing your projects dependencies and their dependencies (TIAB).  It then constructs a requirejs.config object ({"paths": {}, shim: {}}) with an auto load option.
+
+This plugin works both InBrowser (dependencies reread each page load) & InBuild (config object saved to disk, so you can dump your bower.json files). 
+
+May also work on other AMD loaders (never tested it).
 
 ## Install
 
@@ -30,15 +33,16 @@ file) or create an alias to the plugin location:
 main.js
 ```main.js
 requirejs.config({
-    bower: {
-            baseUrl: '../bower_components',
-            extensions: 'js|css',
-            ignore: 'requirejs|requirejs-domready|requirejs-text',
-            auto: true
-        },
+    baseUrl:'/js',
     paths : {
         //create alias to plugins (not needed if plugins are on the baseUrl)
         bower: '../bower_components/requirejs-plugin-bower'
+    },
+    bower: {
+        baseUrl: '../bower_components',
+        extensions: 'js|css',
+        ignore: 'requirejs|requirejs-domready|requirejs-text',
+        auto: true
     }
 });
 
@@ -96,4 +100,8 @@ Also be sure to check [RequireJS Wiki](https://github.com/jrburke/requirejs/wiki
 
 ## License
 
-Released under the MIT license & New BSD.
+requirejs-plugin-bower is released under two licenses: new BSD, and MIT. You may pick the
+license that best suits your development needs. The text of both licenses are
+provided below.
+
+Copyright (c) 2014 Rodney Robert Ebanks foss@rodneyebanks.com

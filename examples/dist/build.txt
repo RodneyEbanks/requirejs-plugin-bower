@@ -1,0 +1,8 @@
+
+js/auto.js
+----------------
+bower_components/requirejs-text/text.js
+bower_components/requirejs-plugins/src/json.js
+bower_components/requirejs-plugin-bower/src/bower.js
+bower!../bower.json
+js/auto.js

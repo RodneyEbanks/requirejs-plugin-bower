@@ -21,7 +21,6 @@
     mainConfigFile: 'main.js',
     modules: [{
         name: 'bower',
-       //  create: true,
         include: ['bower'],
         exclude: ['text', 'json']
     }, {

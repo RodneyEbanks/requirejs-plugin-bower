@@ -5,10 +5,11 @@ define(['image'], function(image) {
         var wrapper = document.getElementById('wrapper');
 
         if (requirejs2bower) {
-            wrapper.innerHTML = '<h2>Success</h2><br>';
+            wrapper.innerHTML = '<h2>Success</h2><a href="bower.json">Read bower.json</a><br><br>';
             wrapper.appendChild(requirejs2bower);
         }
 
     });
 
 });
+

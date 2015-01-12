@@ -17,6 +17,7 @@
   ],
   "dependencies": {
     "requirejs": "~2.1.15",
-    "requirejs-plugin-bower": "~0.0.1"
+    "requirejs-plugin-bower": "*",
+    "requirejs-plugins": "~1.0.3"
   }
 }

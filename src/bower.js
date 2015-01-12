@@ -25,7 +25,6 @@
                 config: {}
             }, bower = {
                 settings: {},
-                overrides: {},
                 json: {},
                 config: {
                     paths: {},
@@ -46,22 +45,13 @@
             return destination;
         }
 
-        // http://jsperf.com/check-json-validity-try-catch-vs-regex
-        function isValidJson(str) {
-            str = str || '';
-            if (typeof str !== 'string') {
-                str = str.replace(/\\./g, '@').replace(/"[^"\\\n\r]*"/g, '');
-                return (/^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]*$/).test(str);
-            }
-            return false;
-        }
-
         function formatBowerFilePath(name) {
             name = bower.settings.baseUrl + '/' + name + '/bower.json';
             return name;
         }
 
         function processBowerFile(name, req, onProcess, config, root) {
+            var jsonFileName;
             req = req || request.parent;
             config = config || request.config;
             onProcess = onProcess || function() {};
@@ -81,7 +71,14 @@
                 }
             }
 
-            json.load(name, req, function(jsonFile) {
+            // Fixme: Build require not working with paths relative to baseUrl in browser '../bower.json'.
+            if (request.config.isBuild) {
+                jsonFileName = name.replace(REGEX_PATH_RELATIVE, request.config.appDir);
+            } else {
+                jsonFileName = name;
+            }
+
+            json.load(jsonFileName, req, function(jsonFile) {
                 parseBowerFile(name, jsonFile, finished, root);
             }, config);
         }
@@ -92,7 +89,7 @@
                 validExt = new RegExp('^(' + bower.settings.extensions + ')$'),
                 ignoreFile = new RegExp('^(' + bower.settings.ignore + ')$');
 
-            // requirejs-plugins json Returns a javascript object inBrowser and json string inBuild
+            // Fixme: requirejs-plugins json Returns a javascript object inBrowser and json string inBuild
             if (typeof bowerJson !== 'object') {
                 bowerJson = JSON.parse(bowerJson);
             }
@@ -104,10 +101,6 @@
             // Top level for all mains in module
             baseUrl = parseFilePath.exec(bowerFilePath)[1];
             baseName = bowerJson.name;
-
-
-            // TEMPORARY: Store formatted bower.json for debugging
-            // bower.json[bowerFilePath] = bowerJson;
 
             // Process each module in main
             bowerJson.main.forEach(function(moduleName) {
@@ -157,7 +150,6 @@
             request.config = config;
             bower.settings = defaults;
             bower.settings = objectExtend(bower.settings, request.config.bower || {});
-            bower.settings = objectExtend(bower.settings, bower.overrides);
             bower.settings.file = name;
 
             processBowerFile(bower.settings.file, req, function(value) {
@@ -173,13 +165,11 @@
         }
 
         function pluginNormalize(name, normalize) {
-            var inputPath = new RegExp(REGEX_PATH_BOWER);
-            name = inputPath.exec(name || bower.settings.file || defaults.file);
-            if (isValidJson(name[2])) {
-                bower.overrides = JSON.parse(name[2]);
-            }
+            var bowerPath = new RegExp(REGEX_PATH_BOWER),
+                bowerFile = bowerPath.exec(name || bower.settings.file || defaults.file);
 
-            name = normalize(name[1]);
+            name = normalize(bowerFile[1]);
+
             return name;
         }
 
@@ -187,10 +177,12 @@
             var content = JSON.stringify(bower.config);
 
             if (bower.settings.auto) {
-                write('define("' + pluginName + '!' + moduleName + '", function(){var bowerConfig=' + content + ';\nrequirejs.config(bowerConfig);\nreturn bowerConfig;\n});\n');
+                content = 'define("' + pluginName + '!' + moduleName + '", function(){var bowerConfig=' + content + ';\nrequirejs.config(bowerConfig);\nreturn bowerConfig;\n});\n';
             } else {
-                write('define("' + pluginName + '!' + moduleName + '", function(){\nreturn ' + content + ';\n});\n');
+                content = 'define("' + pluginName + '!' + moduleName + '", function(){\nreturn ' + content + ';\n});\n';
             }
+
+            write(content);
         }
 
         return {
