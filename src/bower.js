@@ -16,6 +16,7 @@
             extensions: 'js|css',
             ignore: 'requirejs|requirejs-domready|requirejs-text',
             auto: true,
+            deps: ['dependencies'],
             rjsConfig: {
                 paths: {},
                 shim: {}
@@ -64,7 +65,8 @@
 
             function finished(bowerConfig) {
                 bowerCounter = bowerCounter - 1;
-                if (bowerCounter === 0) {
+
+                if (bowerCounter < 1) {
                     if (done) {
                         done(bowerConfig);
                     }
@@ -92,11 +94,15 @@
             // Fixme: requirejs-plugins json Returns a javascript object inBrowser and json string inBuild
             if (typeof bowerJson !== 'object') {
                 bowerJson = JSON.parse(bowerJson);
+            } else {
+                onParse(bower.config);
             }
 
             // Format bower.json
             bowerJson.main = [].concat(bowerJson.main || bowerFilePath);
-            bowerJson.dependencies = Object.keys(bowerJson.dependencies || {});
+            bower.settings.deps.forEach(function(depsPath) {
+                bowerJson[depsPath] = Object.keys(bowerJson[depsPath] || {});
+            });
 
             // Top level for all mains in module
             baseUrl = parseFilePath.exec(bowerFilePath)[1];
@@ -134,10 +140,14 @@
 
             bower.processed[baseName] = true;
 
-            // Process modules dependencies
-            bowerJson.dependencies.forEach(function(value) {
-                if (!ignoreFile.test(value)) {
-                    processBowerFile(formatBowerFilePath(value));
+            // Process modules dependencies (any included in defaults/settings dependencies:[])
+            bower.settings.deps.forEach(function(bowerDependencies) {
+                if (bowerJson[bowerDependencies] && bowerJson[bowerDependencies].length > 0) {
+                    bowerJson[bowerDependencies].forEach(function(dependency) {
+                        if (!ignoreFile.test(dependency)) {
+                            processBowerFile(formatBowerFilePath(dependency));
+                        }
+                    });
                 }
             });
 

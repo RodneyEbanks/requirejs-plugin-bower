@@ -1,7 +1,11 @@
 requirejs.config({
-   baseUrl: 'js',
+    baseUrl: 'js',
     bower: {
-        auto: true
+        baseUrl: '../bower_components',
+        extensions: 'js|css',
+        ignore: 'requirejs|requirejs-domready|requirejs-text',
+        auto: true,
+        deps: ['dependencies'] // can add 'devDependencies' as well
     },
     paths: {
         'text': '../bower_components/requirejs-text/text',
