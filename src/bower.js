@@ -81,7 +81,11 @@
             }
 
             json.load(jsonFileName, req, function(jsonFile) {
-                parseBowerFile(name, jsonFile, finished, root);
+                if(jsonFile) {
+                       parseBowerFile(name, jsonFile, finished, root);
+               } else {
+                   onProcess(bower.config);
+               }
             }, config);
         }
 
@@ -92,9 +96,10 @@
                 ignoreFile = new RegExp('^(' + bower.settings.ignore + ')$');
 
             // Fixme: requirejs-plugins json Returns a javascript object inBrowser and json string inBuild
-            if (typeof bowerJson !== 'object') {
+            if (bowerJson && typeof bowerJson !== 'object') {
                 bowerJson = JSON.parse(bowerJson);
             } else {
+                // Necessary if a dependency is in any bower.json but is not installed most common with devDependencies
                 onParse(bower.config);
             }
 
