@@ -1,6 +1,7 @@
 {
     "name": "requirejs-plugin-bower",
-    "version": "0.0.4",
+    "version": "0.0.5",
+    "description": "Automatically configure Requirejs paths and shim settings for installed Bower components (InBrowser & InBuild)",
     "authors": [
         "rodneyebanks <foss@rodneyebanks.com>"
     ],

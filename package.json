@@ -1,7 +1,7 @@
 {
     "name": "requirejs-plugin-bower",
-    "version": "0.0.2",
-    "description": "Bower components to Requirejs paths (InBrowser & InBuild)",
+    "version": "0.0.5",
+    "description": "Automatically configure Requirejs paths and shim settings for installed Bower components (InBrowser & InBuild)",
     "main": "dist/bower.js",
     "directories": {
         "example": "examples"
@@ -21,7 +21,7 @@
         "config"
     ],
     "author": "rodneyebanks <foss@rodneyebanks.com>",
-    "license": "MIT",
+    "license": ["New BSD", "MIT"],
     "bugs": {
         "url": "https://github.com/RodneyEbanks/requirejs-plugin-bower/issues"
     },

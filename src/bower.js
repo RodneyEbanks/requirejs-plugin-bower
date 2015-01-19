@@ -17,6 +17,7 @@
             ignore: 'requirejs|requirejs-domready|requirejs-text',
             auto: true,
             deps: ['dependencies'],
+            optimistic: true,
             rjsConfig: {
                 paths: {},
                 shim: {}
@@ -35,7 +36,9 @@
             }, bowerCounter = 0,
             done, REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
             REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/,
-            REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/;
+            REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/,
+            // Support for other auto-config on other AMD Loaders
+            requirejs = requirejs || require;
 
         function objectExtend(destination, source) {
             if (typeof source === 'object') {
@@ -73,20 +76,26 @@
                 }
             }
 
-            // Fixme: Build require not working with paths relative to baseUrl in browser '../bower.json'.
+            // Fixme: Build require not working with paths relative to baseUrl from browser config e.g. '../bower.json'.
             if (request.config.isBuild) {
                 jsonFileName = name.replace(REGEX_PATH_RELATIVE, request.config.appDir);
             } else {
                 jsonFileName = name;
             }
 
-            json.load(jsonFileName, req, function(jsonFile) {
-                if(jsonFile) {
-                       parseBowerFile(name, jsonFile, finished, root);
-               } else {
-                   onProcess(bower.config);
-               }
-            }, config);
+            if (bower.processed[name] !== true) {
+                bower.processed[name] = true;
+
+                json.load(jsonFileName, req, function(jsonFile) {
+                    if (jsonFile) {
+                        parseBowerFile(name, jsonFile, finished, root);
+                    } else {
+                        onProcess(bower.config);
+                    }
+                }, config);
+            } else {
+                finished(bower.config);
+            }
         }
 
         function parseBowerFile(bowerFilePath, bowerJson, onParse, root) {
@@ -122,7 +131,7 @@
                 file = filePath[2];
                 ext = filePath[3];
 
-                if (validExt.test(ext) && (!ignoreFile.test(baseName) || !bower.processed[baseName])) {
+                if (validExt.test(ext) && !ignoreFile.test(baseName)) {
                     if (file === name && ext !== 'js') {
                         // Stop overwites when module contains main with same name and different extensions ionic.js > ionic, ionic.css > ionic-css
                         name = name + '-' + ext;
@@ -142,9 +151,6 @@
                     }
                 }
             });
-
-            bower.processed[baseName] = true;
-
             // Process modules dependencies (any included in defaults/settings dependencies:[])
             bower.settings.deps.forEach(function(bowerDependencies) {
                 if (bowerJson[bowerDependencies] && bowerJson[bowerDependencies].length > 0) {
@@ -167,7 +173,7 @@
             bower.settings = objectExtend(bower.settings, request.config.bower || {});
             bower.settings.file = name;
 
-            processBowerFile(bower.settings.file, req, function(value) {
+            processBowerFile(bower.settings.file, req, function() {
                 if (bower.settings.auto && !request.config.isBuild) {
                     requirejs.config(bower.config);
                 }
