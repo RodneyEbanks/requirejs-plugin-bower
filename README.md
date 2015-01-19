@@ -1,4 +1,4 @@
-# What if RequireJS could read bower.json files for module paths and dependencies?.
+# What if RequireJS could read bower.json files for module paths and dependencies?
 
 This Bower plugin for [RequireJS](http://requirejs.org) reads your root bower.json parsing your projects dependencies and their dependencies (TIAB).  It then constructs a requirejs.config object ({"paths": {}, shim: {}}) with an auto load option.
 
@@ -43,6 +43,7 @@ requirejs.config({
         extensions: 'js|css',
         ignore: 'requirejs|requirejs-domready|requirejs-text',
         auto: true
+        deps: ['dependencies', 'devDependencies']
     }
 });
 
@@ -84,7 +85,7 @@ plugin code:
     // will remove whole source code of "json" and "text" plugins during build
     // JSON/text files that are bundled during build will still work fine but
     // you won't be able to load JSON/text files dynamically after build
-    stubModules : ['json', 'text']
+    stubModules : ['json', 'text', 'requirejs-plugin-bower']
 })
 ```
 
@@ -101,7 +102,6 @@ Also be sure to check [RequireJS Wiki](https://github.com/jrburke/requirejs/wiki
 ## License
 
 requirejs-plugin-bower is released under two licenses: new BSD, and MIT. You may pick the
-license that best suits your development needs. The text of both licenses are
-provided below.
+license that best suits your development needs.
 
 Copyright (c) 2014 Rodney Robert Ebanks foss@rodneyebanks.com
