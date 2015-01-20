@@ -17,7 +17,6 @@
             ignore: 'requirejs|requirejs-domready|requirejs-text',
             auto: true,
             deps: ['dependencies'],
-            optimistic: true,
             rjsConfig: {
                 paths: {},
                 shim: {}
@@ -88,6 +87,10 @@
 
                 json.load(jsonFileName, req, function(jsonFile) {
                     if (jsonFile) {
+
+                        if(typeof jsonFile !== 'object') {
+                            jsonFile = JSON.parse(jsonFile);
+                        }
                         parseBowerFile(name, jsonFile, finished, root);
                     } else {
                         onProcess(bower.config);
@@ -104,12 +107,10 @@
                 validExt = new RegExp('^(' + bower.settings.extensions + ')$'),
                 ignoreFile = new RegExp('^(' + bower.settings.ignore + ')$');
 
-            // Fixme: requirejs-plugins json Returns a javascript object inBrowser and json string inBuild
-            if (bowerJson && typeof bowerJson !== 'object') {
-                bowerJson = JSON.parse(bowerJson);
-            } else {
-                // Necessary if a dependency is in any bower.json but is not installed most common with devDependencies
+            // Check to make sure we actually have a bowerJson, otherwise, just call the onParse with an return.
+            if (!bowerJson) {
                 onParse(bower.config);
+                return;
             }
 
             // Format bower.json
