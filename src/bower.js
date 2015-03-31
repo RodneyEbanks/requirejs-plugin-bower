@@ -1,43 +1,41 @@
 /*    
- * @license requirejs - plugin - bower 0.0.1
+ * @license requirejs - plugin - bower 0.1.0
  * Copyright(c) 2014, Rodney Robert Ebanks foss@rodneyebanks.com All Rights Reserved.
  * Available via the MIT or new BSD license.
  */
-
-// FIXME: Some bundled components have the same filename for different file types (.js/.css) which result in overwrites e.g. ionic > ionic.js & ionic.css.
-// NOTE: Manual fix to compatibility issue is adding paths/shim which will overwrite auto-config.
 
 (function() {
     'use strict';
     define(['module', 'json'], function(module, json) {
         var defaults = {
-            file: '/bower.json',
+            root: '/bower.json',
+            manifest: 'bower.json',
             baseUrl: '../bower_components',
             extensions: 'js|css',
             ignore: 'requirejs|requirejs-domready|requirejs-text',
             auto: true,
             deps: ['dependencies'],
-            rjsConfig: {
+            loader: {
+                css: 'css'
+            }
+        };
+        var request = {
+            parent: null,
+            config: {}
+        };
+        var store = {
+            count: 0,
+            processed: {},
+            json: {},
+            modules: {},
+            config: {
                 paths: {},
                 shim: {}
             }
-        }, request = {
-                parent: null,
-                config: {}
-            }, bower = {
-                settings: {},
-                json: {},
-                config: {
-                    paths: {},
-                    shim: {}
-                },
-                processed: {}
-            }, bowerCounter = 0,
-            done, REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
+        };
+        var REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
             REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/,
-            REGEX_PATH_BOWER = /^(.*?bower.json)+(.*)$/,
-            // Support for other auto-config on other AMD Loaders
-            requirejs = requirejs || require;
+            REGEX_PATH_MANIFEST = new RegExp('/^(.*?' + defaults.manifest + ')+(.*)$/');
 
         function objectExtend(destination, source) {
             if (typeof source === 'object') {
@@ -48,31 +46,29 @@
             return destination;
         }
 
-        function formatBowerFilePath(name) {
-            name = bower.settings.baseUrl + '/' + name + '/bower.json';
+        function formatManifestPath(name) {
+            name = defaults.baseUrl + '/' + name + '/' + defaults.manifest;
             return name;
         }
 
-        function processBowerFile(name, req, onProcess, config, root) {
+        function processManifest(name, req, onProcess, config, root) {
             var jsonFileName;
             req = req || request.parent;
             config = config || request.config;
             onProcess = onProcess || function() {};
 
-            bowerCounter = bowerCounter + 1;
+            store.count = store.count + 1;
 
-            if (root) {
-                done = onProcess;
+            function finished(config) {
+                store.count = store.count - 1;
+
+                if (store.count < 1) {
+                    request.onLoad(config);
+                }
             }
 
-            function finished(bowerConfig) {
-                bowerCounter = bowerCounter - 1;
-
-                if (bowerCounter < 1) {
-                    if (done) {
-                        done(bowerConfig);
-                    }
-                }
+            if (root) {
+                request.onLoad = onProcess;
             }
 
             // Fixme: Build require not working with paths relative to baseUrl from browser config e.g. '../bower.json'.
@@ -82,123 +78,130 @@
                 jsonFileName = name;
             }
 
-            if (bower.processed[name] !== true) {
-                bower.processed[name] = true;
+            if (store.processed[name] !== true) {
+                store.processed[name] = true;
 
                 json.load(jsonFileName, req, function(jsonFile) {
                     if (jsonFile) {
-
-                        if(typeof jsonFile !== 'object') {
+                        if (typeof jsonFile !== 'object') {
                             jsonFile = JSON.parse(jsonFile);
                         }
-                        parseBowerFile(name, jsonFile, finished, root);
+                        parseManifest(name, jsonFile, finished, root);
                     } else {
-                        onProcess(bower.config);
+                        onProcess(store.config);
                     }
                 }, config);
             } else {
-                finished(bower.config);
+                finished(store.config);
             }
         }
 
-        function parseBowerFile(bowerFilePath, bowerJson, onParse, root) {
-            var baseUrl, baseName, parseFilePath = new RegExp(REGEX_PATH_SPLIT),
+        function parseManifest(file, manifestJson, onParse, root) {
+            var baseUrl, baseName, shimModules = [],
+                localDeps = [],
+                parseManifestPath = new RegExp(REGEX_PATH_SPLIT),
                 parseRelativePath = new RegExp(REGEX_PATH_RELATIVE),
-                validExt = new RegExp('^(' + bower.settings.extensions + ')$'),
-                ignoreFile = new RegExp('^(' + bower.settings.ignore + ')$');
+                validExt = new RegExp('^(' + defaults.extensions + ')$'),
+                ignoreFile = new RegExp('^(' + defaults.ignore + ')$');
 
-            // Check to make sure we actually have a bowerJson, otherwise, just call the onParse with an return.
-            if (!bowerJson) {
-                onParse(bower.config);
+            // Check to make sure we actually have a manifestJson, otherwise, just call the onParse with a return.
+            if (!manifestJson) {
+                onParse(store.config);
                 return;
             }
 
-            // Format bower.json
-            bowerJson.main = [].concat(bowerJson.main || bowerFilePath);
-            bower.settings.deps.forEach(function(depsPath) {
-                bowerJson[depsPath] = Object.keys(bowerJson[depsPath] || {});
+            // Format manifest to required standard.
+            manifestJson.main = [].concat(manifestJson.main || file);
+            defaults.deps.forEach(function(depsPath) {
+                manifestJson[depsPath] = Object.keys(manifestJson[depsPath] || {});
             });
 
             // Top level for all mains in module
-            baseUrl = parseFilePath.exec(bowerFilePath)[1];
-            baseName = bowerJson.name;
+            baseUrl = parseManifestPath.exec(file)[1];
+            baseName = manifestJson.name;
 
             // Process each module in main
-            bowerJson.main.forEach(function(moduleName) {
-                var name, file, path, ext, filePath = parseFilePath.exec(moduleName);
+            manifestJson.main.forEach(function(moduleName) {
+                var name, file, path, ext, filePath = parseManifestPath.exec(moduleName);
 
-                name = bowerJson.name;
+                name = manifestJson.name;
                 path = filePath[1].replace(parseRelativePath, '');
                 file = filePath[2];
                 ext = filePath[3];
 
                 if (validExt.test(ext) && !ignoreFile.test(baseName)) {
-                    if (file === name && ext !== 'js') {
+                    if (ext !== 'js') {
                         // Stop overwites when module contains main with same name and different extensions ionic.js > ionic, ionic.css > ionic-css
                         name = name + '-' + ext;
-                    } else if (file !== name && bowerJson.main.length > 1) {
-                        // Multiple main modules possible e.g,
+
+                        if (defaults.loader[ext]) {
+                            localDeps.push(defaults.loader[ext] + '!' + name);
+                        }
+                    } else if (file !== name && manifestJson.main.length > 1) {
+                        // Multiple main modules possible.
                         name = file;
+                        shimModules.push(name);
                     } else {
                         name = name;
+                        shimModules.push(name);
                     }
 
-                    bower.config.paths[name] = baseUrl + path + file;
-                    bower.config.shim[name] = {};
-                    bower.config.shim[name].exports = name;
+                    store.config.paths[name] = baseUrl + path + file;
+                    store.config.shim[name] = {};
+                    store.config.shim[name].exports = name;
 
-                    if (bowerJson.dependencies.length > 0) {
-                        bower.config.shim[name].deps = bowerJson.dependencies;
-                    }
                 }
             });
+
+            // Add module shims with dependencies.
+            shimModules.forEach(function(moduleName) {
+                if (manifestJson.dependencies.length > 0 || localDeps.length > 0) {
+                    store.config.shim[moduleName].deps = [].concat(localDeps, manifestJson.dependencies);
+                }
+            });
+
+
             // Process modules dependencies (any included in defaults/settings dependencies:[])
-            bower.settings.deps.forEach(function(bowerDependencies) {
-                if (bowerJson[bowerDependencies] && bowerJson[bowerDependencies].length > 0) {
-                    bowerJson[bowerDependencies].forEach(function(dependency) {
+            defaults.deps.forEach(function(bowerDependencies) {
+                if (manifestJson[bowerDependencies] && manifestJson[bowerDependencies].length > 0) {
+                    manifestJson[bowerDependencies].forEach(function(dependency) {
                         if (!ignoreFile.test(dependency)) {
-                            processBowerFile(formatBowerFilePath(dependency));
+                            processManifest(formatManifestPath(dependency));
                         }
                     });
                 }
             });
 
             // Return
-            onParse(bower.config);
+            onParse(store.config);
         }
 
         function pluginLoad(name, req, onLoad, config) {
             request.parent = req;
             request.config = config;
-            bower.settings = defaults;
-            bower.settings = objectExtend(bower.settings, request.config.bower || {});
-            bower.settings.file = name;
+            // request.onLoad = onLoad;
+            defaults = objectExtend(defaults, request.config.bower || {});
 
-            processBowerFile(bower.settings.file, req, function() {
-                if (bower.settings.auto && !request.config.isBuild) {
-                    requirejs.config(bower.config);
+            processManifest(defaults.root, req, function(config) {
+                if (defaults.auto && !request.config.isBuild) {
+                    require.config(config);
                 }
-                onLoad(bower.config);
+                onLoad(config);
             }, config, true);
 
             if (config && config.isBuild) {
-                onLoad(bower.config);
+                onLoad(store.config);
             }
         }
 
-        function pluginNormalize(name, normalize) {
-            var bowerPath = new RegExp(REGEX_PATH_BOWER),
-                bowerFile = bowerPath.exec(name || bower.settings.file || defaults.file);
-
-            name = normalize(bowerFile[1]);
-
-            return name;
+        function pluginNormalize(name) {
+            return REGEX_PATH_MANIFEST.exec(name) || defaults.root;
         }
 
         function pluginWrite(pluginName, moduleName, write) {
-            var content = JSON.stringify(bower.config);
+            var content = JSON.stringify(store.config);
 
-            if (bower.settings.auto) {
+            if (defaults.auto) {
                 content = 'define("' + pluginName + '!' + moduleName + '", function(){var bowerConfig=' + content + ';\nrequirejs.config(bowerConfig);\nreturn bowerConfig;\n});\n';
             } else {
                 content = 'define("' + pluginName + '!' + moduleName + '", function(){\nreturn ' + content + ';\n});\n';

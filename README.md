@@ -16,7 +16,7 @@ bower install --save requirejs-plugin-bower
 
 ## Plugins
 
- - **bower** : For creating requirejs.config({path:{},shim:{}}) settings automatically.
+ - **bower** : For creating requirejs.config({paths:{},shim:{}}) settings automatically.
 
 
 ## Documentation
@@ -43,7 +43,10 @@ requirejs.config({
         extensions: 'js|css',
         ignore: 'requirejs|requirejs-domready|requirejs-text',
         auto: true
-        deps: ['dependencies', 'devDependencies']
+        deps: ['dependencies', 'devDependencies'],
+        loader: {
+             css: 'css'
+        }
     }
 });
 
