@@ -36,7 +36,9 @@ requirejs.config({
     baseUrl:'/js',
     paths : {
         //create alias to plugins (not needed if plugins are on the baseUrl)
-        bower: '../bower_components/requirejs-plugin-bower'
+        bower: '../bower_components/requirejs-plugin-bower/src/bower',
+        json: '../bower_components/requirejs-plugins/src/json',
+        text: '../bower_components/requirejs-text/text'
     },
     bower: {
         baseUrl: '../bower_components',
