@@ -98,6 +98,7 @@
 
         function parseManifest(file, manifestJson, onParse, root) {
             var baseUrl, baseName, shimModules = [],
+                shimDeps = [],
                 localDeps = [],
                 parseManifestPath = new RegExp(REGEX_PATH_SPLIT),
                 parseRelativePath = new RegExp(REGEX_PATH_RELATIVE),
@@ -130,6 +131,9 @@
                 ext = filePath[3];
 
                 if (validExt.test(ext) && !ignoreFile.test(baseName)) {
+                    // Fix issue where name contains .js or other file extension
+                    name = name.replace('.', '-');
+
                     if (ext !== 'js') {
                         // Stop overwites when module contains main with same name and different extensions ionic.js > ionic, ionic.css > ionic-css
                         name = name + '-' + ext;
@@ -153,10 +157,14 @@
                 }
             });
 
+            manifestJson.dependencies.forEach(function(value) {
+                shimDeps.push(value.replace('.', '-'));
+            });
+
             // Add module shims with dependencies.
             shimModules.forEach(function(moduleName) {
                 if (manifestJson.dependencies.length > 0 || localDeps.length > 0) {
-                    store.config.shim[moduleName].deps = [].concat(localDeps, manifestJson.dependencies);
+                    store.config.shim[moduleName].deps = [].concat(localDeps, shimDeps);
                 }
             });
 
