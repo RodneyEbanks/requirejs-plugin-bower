@@ -34,8 +34,7 @@
             }
         };
         var REGEX_PATH_RELATIVE = /^([^a-z|0-9]*)/,
-            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/,
-            REGEX_PATH_MANIFEST = new RegExp('/^(.*?' + defaults.manifest + ')+(.*)$/');
+            REGEX_PATH_SPLIT = /^(.*?)([^/\\]*?)(?:\.([^ :\\/.]*))?$/;
 
         function objectExtend(destination, source) {
             if (typeof source === 'object') {
@@ -187,7 +186,7 @@
         function pluginLoad(name, req, onLoad, config) {
             request.parent = req;
             request.config = config;
-            // request.onLoad = onLoad;
+
             defaults = objectExtend(defaults, request.config.bower || {});
 
             processManifest(defaults.root, req, function(config) {
@@ -203,7 +202,9 @@
         }
 
         function pluginNormalize(name) {
-            return REGEX_PATH_MANIFEST.exec(name) || defaults.root;
+            defaults.root = name || defaults.root;
+
+            return defaults.root;
         }
 
         function pluginWrite(pluginName, moduleName, write) {
