@@ -4,9 +4,9 @@
  * Available via the MIT or new BSD license.
  */
 
-(function() {
+(function (requirejs) {
     'use strict';
-    define(['module', 'json'], function(module, json) {
+    define(['module', 'json'], function (module, json) {
         var defaults = {
             root: '/bower.json',
             manifest: 'bower.json',
@@ -38,7 +38,7 @@
 
         function objectExtend(destination, source) {
             if (typeof source === 'object') {
-                Object.keys(source).forEach(function(value) {
+                Object.keys(source).forEach(function (value) {
                     destination[value] = source[value];
                 });
             }
@@ -54,7 +54,7 @@
             var jsonFileName;
             req = req || request.parent;
             config = config || request.config;
-            onProcess = onProcess || function() {};
+            onProcess = onProcess || function () {};
 
             store.count = store.count + 1;
 
@@ -80,7 +80,7 @@
             if (store.processed[name] !== true) {
                 store.processed[name] = true;
 
-                json.load(jsonFileName, req, function(jsonFile) {
+                json.load(jsonFileName, req, function (jsonFile) {
                     if (jsonFile) {
                         if (typeof jsonFile !== 'object') {
                             jsonFile = JSON.parse(jsonFile);
@@ -112,7 +112,7 @@
 
             // Format manifest to required standard.
             manifestJson.main = [].concat(manifestJson.main || file);
-            defaults.deps.forEach(function(depsPath) {
+            defaults.deps.forEach(function (depsPath) {
                 manifestJson[depsPath] = Object.keys(manifestJson[depsPath] || {});
             });
 
@@ -121,7 +121,7 @@
             baseName = manifestJson.name;
 
             // Process each module in main
-            manifestJson.main.forEach(function(moduleName) {
+            manifestJson.main.forEach(function (moduleName) {
                 var name, file, path, ext, filePath = parseManifestPath.exec(moduleName);
 
                 name = manifestJson.name;
@@ -156,12 +156,12 @@
                 }
             });
 
-            manifestJson.dependencies.forEach(function(value) {
+            manifestJson.dependencies.forEach(function (value) {
                 shimDeps.push(value.replace('.', '-'));
             });
 
             // Add module shims with dependencies.
-            shimModules.forEach(function(moduleName) {
+            shimModules.forEach(function (moduleName) {
                 if (manifestJson.dependencies.length > 0 || localDeps.length > 0) {
                     store.config.shim[moduleName].deps = [].concat(localDeps, shimDeps);
                 }
@@ -169,9 +169,9 @@
 
 
             // Process modules dependencies (any included in defaults/settings dependencies:[])
-            defaults.deps.forEach(function(bowerDependencies) {
+            defaults.deps.forEach(function (bowerDependencies) {
                 if (manifestJson[bowerDependencies] && manifestJson[bowerDependencies].length > 0) {
-                    manifestJson[bowerDependencies].forEach(function(dependency) {
+                    manifestJson[bowerDependencies].forEach(function (dependency) {
                         if (!ignoreFile.test(dependency)) {
                             processManifest(formatManifestPath(dependency));
                         }
@@ -189,9 +189,9 @@
 
             defaults = objectExtend(defaults, request.config.bower || {});
 
-            processManifest(defaults.root, req, function(config) {
+            processManifest(defaults.root, req, function (config) {
                 if (defaults.auto && !request.config.isBuild) {
-                    require.config(config);
+                    requirejs.config(config);
                 }
                 onLoad(config);
             }, config, true);
@@ -225,4 +225,4 @@
             write: pluginWrite
         };
     });
-}());
+}(requirejs));

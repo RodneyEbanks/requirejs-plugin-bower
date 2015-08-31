@@ -10,12 +10,12 @@ requirejs.config({
     paths: {
         'text': '../bower_components/requirejs-text/text',
         'json': '../bower_components/requirejs-plugins/src/json',
-        'bower': '../bower_components/requirejs-plugin-bower/src/bower'
+        'bower': '../bower_components/requirejs-plugin-bower/dist/bower'
     },
     deps: []
 });
 
-define(['bower!../bower.json'], function(bowerConfig) {
+define(['bower!../bower.json'], function (bowerConfig) {
 
     //  requirejs.config(bowerConfig); // optional if bower: {auto: true}
     requirejs(['bootstrap']);
