@@ -44,7 +44,7 @@ requirejs.config({
         baseUrl: '../bower_components',
         extensions: 'js|css',
         ignore: 'requirejs|requirejs-domready|requirejs-text',
-        auto: true
+        auto: true,
         deps: ['dependencies', 'devDependencies'],
         loader: {
              css: 'css'
